@@ -8,6 +8,9 @@ from time import gmtime, strftime
 from typing import List
 
 
+PII_FIELDS = ('name', 'email', 'phone', 'ssn', 'password')
+
+
 def filter_datum(fields: List[str], redaction: str, message: str,
                  separator: str) -> str:
     """ Method taht returns the log message obfuscated
@@ -22,7 +25,7 @@ def filter_datum(fields: List[str], redaction: str, message: str,
         new_message = re.sub(field + "=" + f"[^,{separator}]+",
                              " " + field + "=" + redaction, new_message)
 
-    return new_message
+    return new_messagexc
 
 
 class RedactingFormatter(logging.Formatter):
@@ -43,3 +46,24 @@ class RedactingFormatter(logging.Formatter):
         """
         msg = logging.Formatter(self.FORMAT).format(record)
         return filter_datum(self.__fields, self.REDACTION, msg, self.SEPARATOR)
+
+
+def get_logger() -> logging.Logger:
+    """
+    get_logger methdo
+    """
+    logger = logging.getLogger("user_data")
+    logger.setLevel(logging.INFO)
+    logger.propagate = False
+
+    streamHandler = logging.StreamHandler()
+    streamHandler.setFormatter(RedactingFormatter(PII_FIELDS))
+    logger.addHandler(streamHandler)
+    return logger
+
+    return logging.Logger(RedactingFormatter.__name__)
+
+
+if __name__ == "__main__":
+    get_logger()
+    print("PII_FIELDS: {}".format(len(PII_FIELDS)))
