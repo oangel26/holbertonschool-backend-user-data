@@ -35,10 +35,10 @@ class RedactingFormatter(logging.Formatter):
 
     def __init__(self, fields: List[str]):
         super(RedactingFormatter, self).__init__(self.FORMAT)
-        self.__fields = fields
+        self.__fields = list(fields)
 
     def format(self, record: logging.LogRecord) -> str:
-        fields = ["email", "ssn", "password"]
-        filter_data = filter_datum(fields, RedactingFormatter.REDACTION,
-                                   record.msg, RedactingFormatter.SEPARATOR)
-        return f'[HOLBERTON] {record.name} {record.levelname} {strftime("%Y-%m-%d %H:%M:%S", gmtime())}: {filter_data}'
+        """
+        """
+        msg = logging.Formatter(self.FORMAT).format(record)
+        return filter_datum(self.__fields, self.REDACTION, msg, self.SEPARATOR)
