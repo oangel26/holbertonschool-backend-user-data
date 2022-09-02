@@ -2,7 +2,9 @@
 """
 Regex-ing
 """
+import logging
 import re
+from time import gmtime, strftime
 from typing import List
 
 
@@ -18,19 +20,25 @@ def filter_datum(fields: List[str], redaction: str, message: str,
     new_message = message
     for field in fields:
         new_message = re.sub(field + "=" + f"[^,{separator}]+",
-                             field + "=" + redaction, new_message)
+                             " " + field + "=" + redaction, new_message)
 
     return new_message
 
 
-if __name__ == "__main__":
-    personal_info1 = f'name=egg;email=eggmin@eggsample.com;\
-    password=eggcellent;date_of_birth=12/12/1986;'
-    personal_info2 = """name=bob;email=bob@dylan.com;password=bobbycool;\
-    date_of_birth=03/04/1993;"""
+class RedactingFormatter(logging.Formatter):
+    """ Redacting Formatter class
+    """
 
-    fields = ["password", "date_of_birth"]
-    messages = [personal_info1, personal_info2]
+    REDACTION = "***"
+    FORMAT = "[HOLBERTON] %(name)s %(levelname)s %(asctime)-15s: %(message)s"
+    SEPARATOR = ";"
 
-    for message in messages:
-        print(filter_datum(fields, 'xxx', message, ';'))
+    def __init__(self, fields: List[str]):
+        super(RedactingFormatter, self).__init__(self.FORMAT)
+        self.__fields = fields
+
+    def format(self, record: logging.LogRecord) -> str:
+        fields = ["email", "ssn", "password"]
+        filter_data = filter_datum(fields, RedactingFormatter.REDACTION,
+                                   record.msg, RedactingFormatter.SEPARATOR)
+        return f'[HOLBERTON] {record.name} {record.levelname} {strftime("%Y-%m-%d %H:%M:%S", gmtime())}: {filter_data}'
