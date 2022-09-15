@@ -1,62 +1,64 @@
 #!/usr/bin/env python3
 """
-Class SessionAuth
+AUTHOR: JUAN CAMILO GONZALES
+Class Auth
 """
-from api.v1.auth.auth import Auth
-import uuid
-from models.user import User
+from flask import request
+from typing import List, TypeVar
+import os
 
 
-class SessionAuth(Auth):
-    """flask authorization SessionAuth Class
+class Auth():
+    """flask authorization Auth Class
     """
-    user_id_by_session_id = {}
 
     def __init__(self):
         """ Constructor
         """
-        super().__init__()
+        pass
 
-    def create_session(self, user_id: str = None) -> str:
+    def require_auth(self, path: str, excluded_paths: List[str]) -> bool:
+        """Public method that define which routes don't need authentication.
+        This method must be slash tolerant.
+            Returns:
+            True if the path is not in the list of strings excluded_paths.
+            True if path is None
+            True if excluded_paths is None or empty
+            False if path is in excluded_paths
+            excluded_paths contains string path always ending by a /
         """
-        This instance method creates a Session ID for a user_id.
+        if path is None or excluded_paths is None or excluded_paths == []:
+            return True
+
+        if path[-1] != '/':
+            path = path + '/'
+
+        if path in excluded_paths:
+            return False
+        else:
+            return True
+
+    def authorization_header(self, request=None) -> str:
+        """Public method for authorization header. If request doesn’t
+        contain the header key Authorization, returns None. Otherwise,
+        return the value of the header request Authorization.
         """
-        if user_id is None or not isinstance(user_id, str):
+        if request is None or 'Authorization' not in request.headers:
             return None
-        session_id = str(uuid.uuid4())
-        self.user_id_by_session_id[session_id] = user_id
-        return session_id
+        else:
+            return request.headers.get('Authorization')
 
-    def user_id_for_session_id(self, session_id: str = None) -> str:
+    def current_user(self, request=None) -> TypeVar('User'):
+        """Public method that requires authentication
+            Returns: None - request
         """
-        This instance method returns a User ID based on a Session ID:
-        """
-        if session_id is None or not isinstance(session_id, str):
-            return None
-        return self.user_id_by_session_id.get(session_id, None)
+        return None
 
-    def current_user(self, request=None):
+    def session_cookie(self, request=None):
         """
-        This instance method returns a User instance based
-        on a cookie value
+        This instance method that returns a cookie value from a request.
         """
-        session_id = self.session_cookie(request)
-        user_id = self.user_id_for_session_id(session_id)
-        user = User.get(user_id)
-        return user
-
-    def destroy_session(self, request=None):
-        """
-        This instance method deletes the user session / logout
-        """
+        _my_session_id = os.getenv('SESSION_NAME')
         if request is None:
-            return False
-        session_id = self.session_cookie(request)
-        if not session_id:
-            return False
-        user_id = self.user_id_for_session_id(session_id)
-        if not user_id:
-            return False
-        self.user_id_by_session_id.pop(session_id)
-        return True
-    
+            return None
+        return request.cookies.get(_my_session_id)
